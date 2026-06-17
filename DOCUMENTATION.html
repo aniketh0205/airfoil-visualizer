@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airfoil Visualizer — Technical Documentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #0b1225; color: #eef2f8; line-height: 1.7;
+    padding: 2rem; max-width: 900px; margin: 0 auto;
+  }
+  h1 { font-size: 2.2rem; background: linear-gradient(135deg, #60a5fa, #3b82f6, #a855f7); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.5rem; color: #60a5fa; margin-top: 2.5rem; border-bottom: 1px solid #1e2d48; padding-bottom: 0.4rem; }
+  h3 { font-size: 1.15rem; color: #93c5fd; margin-top: 1.8rem; }
+  p, li { color: #c7d2e0; margin-bottom: 0.6rem; }
+  code { font-family: 'JetBrains Mono', monospace; background: #162240; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.88em; color: #93c5fd; }
+  pre { background: #0d172e; border: 1px solid #1e2d48; border-radius: 0.625rem; padding: 1rem; overflow-x: auto; margin: 0.8rem 0; font-size: 0.82rem; }
+  pre code { background: none; padding: 0; }
+  strong { color: #eef2f8; }
+  a { color: #60a5fa; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 0.8rem; }
+  li { margin-bottom: 0.3rem; }
+  .card { background: #111b30; border: 1px solid #1e2d48; border-radius: 0.875rem; padding: 1.5rem; margin: 1rem 0; }
+  .tag { display: inline-block; background: rgba(59,130,246,0.15); color: var(--accent-blue); padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+  .math { background: #162240; border-radius: 0.5rem; padding: 0.8rem 1rem; margin: 0.6rem 0; overflow-x: auto; }
+  .math code { background: none; font-size: 0.92rem; }
+  table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; font-size: 0.9rem; }
+  th, td { border: 1px solid #1e2d48; padding: 0.5rem 0.75rem; text-align: left; }
+  th { background: #162240; color: #93c5fd; font-weight: 600; }
+  td { color: #c7d2e0; }
+  @media print {
+    body { padding: 0; background: white; color: #1a1a2e; }
+    h1 { -webkit-text-fill-color: #3b82f6; }
+    h2 { color: #2563eb; } h3 { color: #3b82f6; }
+    p, li, td { color: #333; }
+    code { background: #eef2f8; color: #1a1a2e; }
+    pre { background: #f5f7fa; border-color: #d1d5db; }
+    pre code { color: #1a1a2e; }
+    .card { background: #f9fafb; border-color: #d1d5db; }
+    table th { background: #eef2f8; color: #1a1a2e; }
+    table td { color: #333; }
+    .math { background: #f5f7fa; }
+  }
+  .toc a { color: #93c5fd; text-decoration: none; display: block; padding: 0.2rem 0; }
+  .toc a:hover { color: #60a5fa; }
+  @media print { .toc a { color: #3b82f6; } }
+</style>
+</head>
+<body>
+
+<h1>Airfoil Visualizer &mdash; Technical Documentation</h1>
+<p style="color:#8899b4; margin-bottom:2rem;">Full-stack educational web application for interactive airfoil aerodynamics simulation</p>
+
+<div class="card toc">
+<h3 style="margin-top:0;">Table of Contents</h3>
+<a href="#intro">1. Introduction &amp; Architecture</a>
+<a href="#stack">2. Technology Stack</a>
+<a href="#backend">3. Backend API</a>
+<a href="#frontend">4. Frontend Pages &amp; Components</a>
+<a href="#formulas">5. Aerodynamic Formulas</a>
+<a href="#naca">6. NACA 4-Digit Coordinate Generation</a>
+<a href="#reynolds">7. Reynolds Number Corrections</a>
+<a href="#dataflow">8. Data Flow</a>
+<a href="#add">9. Adding New Airfoils</a>
+<a href="#methods">10. Methods Summary</a>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="intro">1. Introduction &amp; Architecture</h2>
+
+<p>The Airfoil Visualizer is a full-stack web application that lets users explore airfoil aerodynamics interactively. Users can select predefined airfoils, generate NACA 4-digit airfoils, upload custom coordinate files, and adjust flight parameters to see real-time changes in lift, drag, and stall behavior.</p>
+
+<p>The application follows a <strong>client-server architecture</strong> with a React frontend and an Express.js backend, communicating via a REST API.</p>
+
+<div class="math"><pre><code>┌─────────────┐     REST API      ┌──────────────┐
+│  React App   │ ◄─── JSON ────► │  Express.js  │
+│  (Vite build) │                  │  (Node.js)   │
+└─────────────┘                  └──────┬───────┘
+                                        │
+                              ┌─────────▼────────┐
+                              │  JSON Data Store  │
+                              │  airfoils.json    │
+                              │  content.json     │
+                              └──────────────────┘</code></pre></div>
+
+<p><strong>Key directories:</strong></p>
+<table>
+<tr><th>Path</th><th>Purpose</th></tr>
+<tr><td><code>backend/server.js</code></td><td>Express server entry point, CORS, static serving</td></tr>
+<tr><td><code>backend/routes/</code></td><td>API route definitions</td></tr>
+<tr><td><code>backend/controllers/</code></td><td>Request handlers for each endpoint</td></tr>
+<tr><td><code>backend/utils/</code></td><td>Business logic: aerodynamics, airfoil parsing, NACA generation</td></tr>
+<tr><td><code>backend/data/</code></td><td>JSON data files (airfoils, content)</td></tr>
+<tr><td><code>frontend/src/pages/</code></td><td>React page components</td></tr>
+<tr><td><code>frontend/src/components/</code></td><td>Reusable React components</td></tr>
+<tr><td><code>frontend/src/api/</code></td><td>API client functions</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="stack">2. Technology Stack</h2>
+
+<table>
+<tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+<tr><td>Frontend framework</td><td>React 19 + Vite 6</td><td>UI rendering, fast dev builds</td></tr>
+<tr><td>Styling</td><td>Tailwind CSS v4 + CSS variables</td><td>Dark theme, utility classes, custom animations</td></tr>
+<tr><td>Charts</td><td>Recharts 2</td><td>Interactive graphs (Cl, Cd, L/D, polar)</td></tr>
+<tr><td>Routing</td><td>React Router 7</td><td>Client-side routing for 7 pages</td></tr>
+<tr><td>Backend</td><td>Express.js 4 + Node.js</td><td>REST API server</td></tr>
+<tr><td>File upload</td><td>Multer (memory storage)</td><td>Airfoil coordinate file uploads</td></tr>
+<tr><td>Data storage</td><td>JSON files</td><td>No database; lightweight file-based persistence</td></tr>
+<tr><td>Auth</td><td>Token-based (simple password)</td><td>Content management system access</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="backend">3. Backend API</h2>
+
+<h3>Endpoints</h3>
+
+<table>
+<tr><th>Method</th><th>Path</th><th>Description</th></tr>
+<tr><td><code>GET</code></td><td><code>/api/airfoils</code></td><td>Returns all predefined airfoils with geometry metadata and coordinates</td></tr>
+<tr><td><code>POST</code></td><td><code>/api/calculate</code></td><td>Computes lift/drag for a given airfoil at specified parameters</td></tr>
+<tr><td><code>POST</code></td><td><code>/api/airfoil/custom</code></td><td>Parses pasted coordinate text and returns geometry analysis</td></tr>
+<tr><td><code>POST</code></td><td><code>/api/airfoil/upload</code></td><td>Accepts .dat/.txt/.csv file upload, parses coordinates</td></tr>
+<tr><td><code>POST</code></td><td><code>/api/compare</code></td><td>Compares two airfoils at the same flight conditions</td></tr>
+<tr><td><code>GET</code></td><td><code>/api/quiz</code></td><td>Returns 15 quiz questions about aerodynamics</td></tr>
+<tr><td><code>POST</code></td><td><code>/api/auth/login</code></td><td>Authenticates admin with password, returns JWT token</td></tr>
+<tr><td><code>GET/POST/PUT/DELETE</code></td><td><code>/api/content</code></td><td>CRUD for learn page topics (token-protected for write)</td></tr>
+</table>
+
+<h3>Calculate endpoint — request body</h3>
+<pre><code>{
+  "airfoil": "NACA 2412",        // string: name of predefined airfoil
+  "angleOfAttack": 5,             // number: degrees (-5 to 20)
+  "velocity": 30,                 // number: m/s (5 to 100)
+  "airDensity": 1.225,            // number: kg/m³ (0.5 to 2.0)
+  "chordLength": 1,               // number: meters (0.1 to 2.0)
+  "customAirfoil": {              // optional: for user-uploaded airfoils
+    "geometry": { ... }
+  }
+}</code></pre>
+
+<h3>Calculate endpoint — response</h3>
+<pre><code>{
+  "liftCoefficient": 0.4513,     // Cl (dimensionless)
+  "dragCoefficient": 0.0121,     // Cd (dimensionless)
+  "liftPerMeter": 248.95,        // N/m lift per meter of span
+  "dragPerMeter": 6.67,          // N/m drag per meter of span
+  "liftToDragRatio": 37.32,      // L/D
+  "reynoldsNumber": 2030387,     // Re (dimensionless)
+  "stallWarning": false,         // whether AoA exceeds effective stall angle
+  "explanation": "...",          // plain-text educational explanation
+  "note": "This tool uses simplified aerodynamic approximations..."
+}</code></pre>
+
+<!-- ============================================================ -->
+<h2 id="frontend">4. Frontend Pages &amp; Components</h2>
+
+<table>
+<tr><th>Route</th><th>Page</th><th>Features</th></tr>
+<tr><td><code>/</code></td><td>Home</td><td>Hero with animated orbs, badge-value pills for tech stack, notice-box disclaimer, links to simulator and learn pages</td></tr>
+<tr><td><code>/simulator</code></td><td>Simulator</td><td>Airfoil selection, parameter sliders, SVG airfoil visualization, results grid, 5 interactive graphs (Cl vs AoA, Cd vs AoA, Polar, Velocity, L/D), CSV export, wing span estimator</td></tr>
+<tr><td><code>/custom</code></td><td>Custom Airfoil</td><td>File upload (.dat/.txt/.csv) or paste coordinates, geometry analysis, save to local storage, use in simulator</td></tr>
+<tr><td><code>/learn</code></td><td>Learn</td><td>Two tabs: Theory (CMS-managed topics) and Nomenclature &amp; Anatomy (animated SVG diagram)</td></tr>
+<tr><td><code>/compare</code></td><td>Compare</td><td>Side-by-side comparison of two airfoils with bar charts</td></tr>
+<tr><td><code>/quiz</code></td><td>Quiz</td><td>15 multiple-choice questions, instant feedback, score tracking</td></tr>
+<tr><td><code>/about</code></td><td>About</td><td>Project description, badge-value tech stack, source citations</td></tr>
+<tr><td><code>/admin</code></td><td>Content Management</td><td>Login with token, CRUD for learn page topics</td></tr>
+</table>
+
+<h3>Key Components</h3>
+
+<ul>
+<li><strong>AirfoilVisualizer</strong> — SVG rendering of the airfoil cross-section with: flow arrows showing direction, lift vector (upward or downward based on Cl sign), drag vector, chord line, angle of attack arc indicator, pressure labels ("Higher Velocity / Lower Pressure" on upper surface), stall warning glow. Scales dynamically based on chord.</li>
+<li><strong>AirfoilAnatomy</strong> — Animated SVG diagram using NACA 4415 (cambered, 15% thick) showing: leading edge (LE) circle at x=0 with leader line, trailing edge (TE) circle at x=1, chord line, upper/lower surface labels, camber line, max thickness location, stagnation point. Parts cycle on interval for educational labeling.</li>
+<li><strong>GraphPanel</strong> — Collection of Recharts-based graph components: AoACLGraph, AoACDGraph, PolarGraph, VelocityLiftGraph, VelocityDragGraph, LDRatioGraph, BarChartComparison. All AoA-based graphs now use Re-dependent formulas matching the backend.</li>
+<li><strong>NACAGenerator</strong> — Interactive sliders for camber (m), camber position (p), thickness (t). SVG preview morphs in real time. "Use in Simulator" button sends data via URL query params.</li>
+<li><strong>Navbar</strong> — Glass-morphism navigation with shimmer logo text, floating emoji, active link blue glow indicator.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="formulas">5. Aerodynamic Formulas</h2>
+
+<p>All formulas are implemented in <code>backend/utils/aerodynamics.js</code>. These are simplified educational models, not CFD-grade simulations.</p>
+
+<h3>Lift Coefficient (Cl)</h3>
+
+<div class="math">
+<code>Cl = clAlpha &times; (α - α₀) &times; f<sub>Re_lift</sub></code>
+</div>
+
+<p>Where:</p>
+<ul>
+<li><code>clAlpha</code> = 0.1 per degree — lift curve slope (from thin airfoil theory: 2π per radian ≈ 0.1097 per degree; NACA TN 3361 gives ~0.105 for NACA 0012 at Re=1.8&times;10⁶)</li>
+<li><code>α</code> = angle of attack (degrees)<br>
+<li><code>α₀</code> = zero-lift angle of attack (degrees; negative for cambered airfoils)<br>
+<li><code>f<sub>Re_lift</sub></code> = Reynolds number lift correction factor (see §7)</li>
+</ul>
+
+<h3>Zero-Lift Angle (α₀) — Thin Airfoil Theory</h3>
+
+<div class="math">
+<code>α₀ = -1/π ∫₀^π (dy<sub>c</sub>/dx)(cos θ - 1) dθ</code>
+</div>
+
+<p>where x = (1 - cos θ)/2 maps the chord to an angular coordinate, and y<sub>c</sub>(x) is the camber line. The integral is evaluated numerically via finite differences along the camber line.</p>
+<p>Source: Glauert, H., <em>"The Elements of Aerofoil and Airscrew Theory"</em>, Cambridge University Press, 1926, Chapter VII.</p>
+
+<h3>Stall Model</h3>
+
+<p>When α exceeds the effective stall angle (which is reduced at low Re), Cl decays exponentially:</p>
+
+<div class="math">
+<code>Cl<sub>post-stall</sub> = Cl<sub>max</sub> &times; exp(-0.1 &times; (α - α<sub>stall,eff</sub>))</code>
+</div>
+
+<p>The stall angle baseline comes from published wind tunnel data:</p>
+<table>
+<tr><th>Airfoil</th><th>Baseline Stall</th><th>Source</th></tr>
+<tr><td>NACA 0012</td><td>14° at Re 1.8×10⁶</td><td>Critzos et al., NACA TN 3361 (1955)</td></tr>
+<tr><td>NACA 2412</td><td>14° at Re 2.2×10⁶</td><td>NASA TM (stall at α=14.4°)</td></tr>
+<tr><td>NACA 4412</td><td>14° at Re 5×10⁵</td><td>IJRMEET wind tunnel study</td></tr>
+</table>
+
+<h3>Drag Coefficient (Cd)</h3>
+
+<div class="math">
+<code>Cd = (Cd<sub>base</sub> + Cd<sub>induced</sub> + Cd<sub>thickness</sub>) &times; f<sub>Re_drag</sub> + Cd<sub>aoa_rise</sub> + Cd<sub>stall_rise</sub></code>
+</div>
+
+<p>Components:</p>
+<ul>
+<li><strong>Base drag:</strong> Cd<sub>base</sub> = 0.002 + C<sub>f</sub>, where C<sub>f</sub> = 0.074/Re<sup>1/5</sup> is the Prandtl-Schlichting turbulent skin friction coefficient for a flat plate</li>
+<li><strong>Induced (lift-related) drag:</strong> Cd<sub>induced</sub> = 0.01 × Cl² — simplified model of lift-induced drag (full equation: Cd<sub>i</sub> = Cl²/(π·AR·e))</li>
+<li><strong>Thickness drag:</strong> Cd<sub>thickness</sub> = maxThickness × 0.05 — form drag proportional to thickness ratio</li>
+<li><strong>AoA-dependent rise:</strong> When α > 12°, Cd multiplies by (1 + (α-12)×0.05)</li>
+<li><strong>Post-stall rise:</strong> When α > α<sub>stall,eff</sub>, Cd multiplies by (1 + (α-α<sub>stall,eff</sub>)×0.15)</li>
+</ul>
+
+<h3>Force Calculation</h3>
+
+<div class="math">
+<code>L' = ½ ρ V² c Cl &nbsp;&nbsp;(lift per meter of span, N/m)</code><br>
+<code>D' = ½ ρ V² c Cd &nbsp;&nbsp;(drag per meter of span, N/m)</code>
+</div>
+
+<p>Where ρ = air density, V = velocity, c = chord length.</p>
+
+<h3>Lift-to-Drag Ratio</h3>
+
+<div class="math">
+<code>L/D = Cl / Cd</code>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="naca">6. NACA 4-Digit Coordinate Generation</h2>
+
+<p>Implemented in <code>backend/utils/nacaGenerator.js</code>. The NACA 4-digit series defines airfoils by three parameters:</p>
+<ul>
+<li><strong>m</strong> — maximum camber (percent of chord, first digit)</li>
+<li><strong>p</strong> — position of max camber (tenths of chord, second digit)</li>
+<li><strong>t</strong> — maximum thickness (percent of chord, last two digits)</li>
+</ul>
+
+<h3>Camber Line</h3>
+
+<div class="math">
+<code>y<sub>c</sub> = (m/p²)(2px - x²) &nbsp; for 0 ≤ x ≤ p</code><br>
+<code>y<sub>c</sub> = (m/(1-p)²)(1 - 2p + 2px - x²) &nbsp; for p ≤ x ≤ 1</code>
+</div>
+
+<h3>Thickness Distribution</h3>
+<p>The half-thickness at any chordwise position x is:</p>
+<div class="math">
+<code>y<sub>t</sub> = 5t(0.2969√x - 0.1260x - 0.3516x² + 0.2843x³ - 0.1015x⁴)</code>
+</div>
+
+<p>This polynomial was derived by NACA to match the maximum thickness t at approximately x=0.3c for all airfoils. The coordinates of the upper and lower surfaces are then:</p>
+
+<div class="math">
+<code>x<sub>u</sub> = x - y<sub>t</sub> sin θ &nbsp; &nbsp; y<sub>u</sub> = y<sub>c</sub> + y<sub>t</sub> cos θ</code><br>
+<code>x<sub>l</sub> = x + y<sub>t</sub> sin θ &nbsp; &nbsp; y<sub>l</sub> = y<sub>c</sub> - y<sub>t</sub> cos θ</code>
+</div>
+
+<p>where θ = arctan(dy<sub>c</sub>/dx). The generator produces <strong>150 points per surface</strong> (301 total including TE) evenly spaced in x, with cosine clustering near LE and TE.</p>
+
+<p>For NACA airfoils in <code>airfoils.json</code>, the coordinates are stored at 150-point resolution. For unknown NACA airfoils, the backend generates them on the fly at 100-point resolution.</p>
+
+<!-- ============================================================ -->
+<h2 id="reynolds">7. Reynolds Number Corrections</h2>
+
+<p>The Reynolds number is:</p>
+
+<div class="math">
+<code>Re = ρ V c / μ</code>
+</div>
+
+<p>where μ = 1.81×10⁻⁵ Pa·s (dynamic viscosity of air at 15°C).</p>
+
+<h3>Stall Angle Reduction at Low Re</h3>
+
+<div class="math">
+<code>α<sub>stall,eff</sub> = α<sub>stall,base</sub> - 4.0 × exp(-Re / 180000)</code>
+</div>
+
+<table>
+<tr><th>Reynolds Number</th><th>Reduction</th><th>Effective Stall (base 14°)</th><th>Source</th></tr>
+<tr><td>5×10⁴</td><td>3.0°</td><td>11.0°</td><td>ScienceDirect low-Re studies</td></tr>
+<tr><td>1×10⁵</td><td>2.3°</td><td>11.7°</td><td>ASEE wind tunnel study, Table 1</td></tr>
+<tr><td>2×10⁵</td><td>1.3°</td><td>12.7°</td><td>Interpolated</td></tr>
+<tr><td>5×10⁵</td><td>0.2°</td><td>13.8°</td><td>IJRMEET wind tunnel data</td></tr>
+<tr><td>1×10⁶</td><td>0.0°</td><td>14.0°</td><td>NACA TN 3361</td></tr>
+</table>
+
+<h3>Lift Coefficient Correction</h3>
+
+<div class="math">
+<code>f<sub>Re_lift</sub> = 1 - 0.30 × exp(-Re/70000) - 0.12 × exp(-Re/250000)</code>
+</div>
+
+<table>
+<tr><th>Re</th><th>Factor</th><th>Physical explanation</th></tr>
+<tr><td>5×10⁴</td><td>0.70</td><td>Laminar separation bubbles reduce Cl by ~30%</td></tr>
+<tr><td>1×10⁵</td><td>0.80</td><td>ASEE: CLmax=1.00 vs 1.35 at high Re</td></tr>
+<tr><td>5×10⁵</td><td>0.95</td><td>IJRMEET: approaching high-Re behavior</td></tr>
+<tr><td>1×10⁶</td><td>0.98</td><td>Near full recovery</td></tr>
+</table>
+<p>Source: Selig et al., <em>"Summary of Low-Speed Airfoil Data"</em> Vol. 1–3; Kim et al. (2011), J. Aircraft 48(4).</p>
+
+<h3>Drag Coefficient Correction</h3>
+
+<div class="math">
+<code>f<sub>Re_drag</sub> = 1 + 0.45 × exp(-Re/55000) + 0.18 × exp(-Re/200000)</code>
+</div>
+
+<table>
+<tr><th>Re</th><th>Factor</th><th>Source</th></tr>
+<tr><td>5×10⁴</td><td>1.32</td><td>Hoerner low-Re form drag increase</td></tr>
+<tr><td>1×10⁵</td><td>1.18</td><td>Laminar separation bubble drag penalty</td></tr>
+<tr><td>2×10⁵</td><td>1.08</td><td>Transition toward turbulent flow</td></tr>
+<tr><td>5×10⁵</td><td>1.02</td><td>Near full recovery</td></tr>
+</table>
+<p>Sources: Prandtl-Schlichting turbulent skin friction (C<sub>f</sub> = 0.074/Re<sup>1/5</sup>); Hoerner (1965), <em>"Fluid-Dynamic Drag"</em>.</p>
+
+<!-- ============================================================ -->
+<h2 id="dataflow">8. Data Flow</h2>
+
+<h3>Simulator workflow</h3>
+<ol>
+<li>User selects an airfoil from the dropdown (predefined or custom)</li>
+<li><code>useEffect</code> triggers <code>runCalculation()</code> with a 300ms debounce</li>
+<li>Frontend sends POST to <code>/api/calculate</code> with airfoil name + 4 parameters</li>
+<li>Backend <code>calculate</code> controller validates inputs, calls <code>findAirfoil</code> to look up or generate the airfoil, then calls <code>calculateForPredefined</code> or <code>calculateForCustom</code></li>
+<li>Aerodynamics module computes Cl, Cd, forces, Re, stall warning, and explanation text</li>
+<li>Response sent back as JSON; frontend updates state → re-renders results grid, SVG, and graphs</li>
+</ol>
+
+<h3>NACA Generator workflow</h3>
+<ol>
+<li>User adjusts sliders (m, p, t) on the NACA Generator page</li>
+<li>Frontend generates coordinates locally using <code>nacaGenerator.js</code> utility (client-side copy of the formula)</li>
+<li>SVG preview updates in real time</li>
+<li>Clicking "Use in Simulator" saves to local storage and navigates to <code>/simulator?naca=...&coords=...</code></li>
+<li>Simulator reads URL params, saves as a custom airfoil, and selects it</li>
+</ol>
+
+<h3>Custom airfoil upload workflow</h3>
+<ol>
+<li>User uploads a .dat/.txt/.csv file or pastes coordinate text</li>
+<li>Frontend sends file/text to <code>/api/airfoil/custom</code> or <code>/api/airfoil/upload</code></li>
+<li>Backend parses coordinates, computes geometry (max thickness, camber, stall estimate, zero-lift angle)</li>
+<li>Response includes coordinates + geometry; frontend saves to browser's localStorage</li>
+<li>User can then select it in the Simulator dropdown</li>
+</ol>
+
+<!-- ============================================================ -->
+<h2 id="add">9. Adding New Airfoils</h2>
+
+<p><strong>Method A: Add to <code>airfoils.json</code></strong></p>
+<p>Add a new entry with the following fields. All fields are optional — missing ones will be auto-computed from coordinates:</p>
+<pre><code>{
+  "name": "Your Airfoil Name",
+  "type": "Symmetric",
+  "camberDescription": "Brief description",
+  "maxThickness": 0.12,
+  "maxThicknessLocation": 0.3,
+  "maxCamber": 0.0,
+  "maxCamberLocation": 0.0,
+  "zeroLiftAngle": 0.0,
+  "stallAngle": 14.0,
+  "baseDragCoefficient": 0.006,
+  "description": "A longer description shown in the simulator.",
+  "coordinates": [
+    {"x": 1.0000, "y": 0.0000},
+    ...  (at least 5 points, x in [0,1])
+  ]
+}</code></pre>
+
+<p><strong>If metadata is missing</strong>, the backend's <code>computeAerodynamicProperties()</code> in <code>airfoilParser.js</code> will:</p>
+<ul>
+<li>Compute zero-lift angle from thin airfoil theory (numerical integration of camber line slope)</li>
+<li>Estimate stall angle from camber + thickness (empirical: symmetric ~14°, cambered ~14°, very thick/thin adjusted)</li>
+<li>Compute max camber and thickness from coordinate bounding</li>
+</ul>
+
+<p><strong>Method B: Upload via the Custom Airfoil page</strong></p>
+<p>Accepts coordinate files with 2+ columns separated by spaces, commas, or semicolons. Lines starting with non-numeric headers are skipped. The parser also strips surrounding quotes and UTF-8 BOM.</p>
+
+<p><strong>Error messages</strong> now include the specific line number for each parsing failure, e.g.:<br>
+<code>"Line 12: x=2.5 is out of range [0, 1]"</code></p>
+
+<!-- ============================================================ -->
+<h2 id="methods">10. Methods Summary</h2>
+
+<table>
+<tr><th>Method / Formula</th><th>Used Where</th><th>Source</th></tr>
+<tr><td>Lift curve slope: Cl = 2π sin(α) ≈ 0.1/deg</td><td>aerodynamics.js, GraphPanel.jsx</td><td>Thin airfoil theory; NACA TN 3361</td></tr>
+<tr><td>Zero-lift angle from camber integral</td><td>airfoilParser.js</td><td>Glauert (1926), Ch. VII</td></tr>
+<tr><td>NACA 4-digit coordinate formulas</td><td>nacaGenerator.js</td><td>Jacobs, Ward &amp; Pinkerton, NACA Rep. 460 (1933)</td></tr>
+<tr><td>Prandtl-Schlichting skin friction</td><td>aerodynamics.js</td><td>Prandtl &amp; Schlichting, 1930s</td></tr>
+<tr><td>Stall angle reduction at low Re</td><td>aerodynamics.js</td><td>ASEE 2019, IJRMEET 2024, ScienceDirect 2024</td></tr>
+<tr><td>Re lift correction (exponential fit)</td><td>aerodynamics.js</td><td>Selig et al.; Kim et al. (2011)</td></tr>
+<tr><td>Re drag correction (exponential fit)</td><td>aerodynamics.js</td><td>Hoerner (1965); Prandtl-Schlichting</td></tr>
+<tr><td>Force equations: L' = ½ρV²cCl</td><td>aerodynamics.js</td><td>Standard aerodynamic definition</td></tr>
+<tr><td>Drag polar: Cl vs Cd plotting</td><td>GraphPanel.jsx</td><td>Standard aerodynamic visualization</td></tr>
+<tr><td>Thin airfoil thickness polynomial</td><td>nacaGenerator.js</td><td>NACA TR-460 (standard NACA formula)</td></tr>
+</table>
+
+<div class="card" style="margin-top:2rem;">
+<p style="margin:0; font-size:0.9rem; color:#8899b4;">
+<strong>Disclaimer:</strong> This application uses simplified aerodynamic models for educational purposes. Results are not CFD-accurate and should not be used for real aircraft design without validation. All formulas and correction factors are calibrated to published wind tunnel data within specific Reynolds number ranges.
+</p>
+</div>
+
+<p style="text-align:center; margin-top:2rem; color:#5a6f8a; font-size:0.8rem;">
+Document generated from source code — 2026
+</p>
+
+</body>
+</html>
