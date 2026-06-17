@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: airfoil-visualizer
+    env: node
+    buildCommand: cd frontend && npm install && npx vite build
+    startCommand: node backend/server.js
+    envVars:
+      - key: ADMIN_PASSWORD
+        value: thor343
+      - key: JWT_SECRET
+        generateValue: true

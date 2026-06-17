@@ -19,6 +19,15 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Airfoil Visualizer API is running' });
 });
 
+// Serve built frontend in production
+const path = require('path');
+const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(frontendDist));
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) return;
+  res.sendFile(path.join(frontendDist, 'index.html'));
+});
+
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     return res.status(400).json({ error: err.message });
