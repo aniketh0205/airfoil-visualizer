@@ -53,7 +53,7 @@ export default function AirfoilVisualizer({ coordinates, angleOfAttack = 0, stal
 
   const drawPath = (pts, closed = true) => {
     if (pts.length < 2) return '';
-    const rotated = pts.map(p => rotatePoint(p.x * sx, p.y * sy, aoa));
+    const rotated = pts.map(p => rotatePoint((p.x - 0.5) * sx, p.y * sy, aoa));
     let d = `M ${cx + rotated[0].x} ${cy - rotated[0].y}`;
     for (let i = 1; i < pts.length; i++) {
       d += ` L ${cx + rotated[i].x} ${cy - rotated[i].y}`;
@@ -62,8 +62,8 @@ export default function AirfoilVisualizer({ coordinates, angleOfAttack = 0, stal
     return d;
   };
 
-  const quarterX = rotatePoint(0.25 * sx, 0, aoa).x;
-  const quarterY = rotatePoint(0.25 * sx, 0, aoa).y;
+  const quarterX = rotatePoint(-0.25 * sx, 0, aoa).x;
+  const quarterY = rotatePoint(-0.25 * sx, 0, aoa).y;
   const qx = cx + quarterX;
   const qy = cy - quarterY;
 
@@ -124,8 +124,8 @@ export default function AirfoilVisualizer({ coordinates, angleOfAttack = 0, stal
         {/* Flow particles */}
         {particles.map(p => (
           <line key={p.key}
-            x1={cx + p.x * sx - 7} y1={cy + p.y * sy}
-            x2={cx + p.x * sx + 7} y2={cy + p.y * sy}
+            x1={cx + (p.x - 0.5) * sx - 7} y1={cy + p.y * sy}
+            x2={cx + (p.x - 0.5) * sx + 7} y2={cy + p.y * sy}
             stroke={stalled ? '#ef4444' : '#60a5fa'}
             strokeWidth="1.5" opacity={0.5} />
         ))}
