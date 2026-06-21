@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 const parts = [
   { key: 'le', label: 'Leading Edge', color: '#ef4444', x: 0.05, y: 0.5 },
@@ -33,10 +33,13 @@ function naca4415Coords() {
 export default function AirfoilAnatomy({ width = 800, height = 340 }) {
   const [activePart, setActivePart] = useState(null);
   const [cycleIndex, setCycleIndex] = useState(0);
+  const lastInteraction = useRef(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCycleIndex(i => (i + 1) % parts.length);
+      if (Date.now() - lastInteraction.current > 5000) {
+        setCycleIndex(i => (i + 1) % parts.length);
+      }
     }, 2500);
     return () => clearInterval(interval);
   }, []);
@@ -176,7 +179,7 @@ export default function AirfoilAnatomy({ width = 800, height = 340 }) {
             key={p.key}
             onMouseEnter={() => setActivePart(p.key)}
             onMouseLeave={() => setActivePart(null)}
-            onClick={() => setCycleIndex(i)}
+            onClick={() => { lastInteraction.current = Date.now(); setCycleIndex(i); }}
             className={`px-4 py-2 rounded-full text-xs font-medium border transition-all ${
               parts[cycleIndex].key === p.key
                 ? 'text-white shadow-md scale-105'

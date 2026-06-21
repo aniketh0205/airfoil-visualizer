@@ -152,8 +152,10 @@ export default function ManageContent() {
                 {colors.map(c => (
                   <button key={c} onClick={() => setForm(f => ({ ...f, color: c }))}
                     className={`w-6 h-6 rounded-full border-2 transition-all ${form.color === c ? 'scale-125' : ''}`}
-                    style={{ borderColor: form.color === c ? 'var(--accent-blue)' : 'var(--border-color)' }}
-                    style={{ backgroundColor: c.replace('border-l-', '') === 'blue-700' ? '#1a237e' : c.replace('border-l-', '') === 'green-500' ? '#4caf50' : c.replace('border-l-', '') === 'orange-500' ? '#ff9800' : c.replace('border-l-', '') === 'purple-500' ? '#9c27b0' : c.replace('border-l-', '') === 'red-500' ? '#ef5350' : c.replace('border-l-', '') === 'amber-500' ? '#ffc107' : c.replace('border-l-', '') === 'teal-500' ? '#009688' : c.replace('border-l-', '') === 'indigo-500' ? '#3f51b5' : c.replace('border-l-', '') === 'cyan-500' ? '#00bcd4' : c.replace('border-l-', '') === 'violet-500' ? '#7c4dff' : c.replace('border-l-', '') === 'rose-500' ? '#e91e63' : '#e91e63' }} />
+                    style={{
+                      borderColor: form.color === c ? 'var(--accent-blue)' : 'var(--border-color)',
+                      backgroundColor: c.replace('border-l-', '') === 'blue-700' ? '#1a237e' : c.replace('border-l-', '') === 'green-500' ? '#4caf50' : c.replace('border-l-', '') === 'orange-500' ? '#ff9800' : c.replace('border-l-', '') === 'purple-500' ? '#9c27b0' : c.replace('border-l-', '') === 'red-500' ? '#ef5350' : c.replace('border-l-', '') === 'amber-500' ? '#ffc107' : c.replace('border-l-', '') === 'teal-500' ? '#009688' : c.replace('border-l-', '') === 'indigo-500' ? '#3f51b5' : c.replace('border-l-', '') === 'cyan-500' ? '#00bcd4' : c.replace('border-l-', '') === 'violet-500' ? '#7c4dff' : c.replace('border-l-', '') === 'rose-500' ? '#e91e63' : '#e91e63'
+                    }} />
                 ))}
               </div>
             </div>
