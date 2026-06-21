@@ -266,7 +266,8 @@ export default function Simulator() {
                       tooltip: 'Ratio of inertial to viscous forces. Determines flow regime — higher Re = thinner boundary layer, lower drag.' },
                     { label: 'Status', value: result.stallWarning ? '⚠ STALL' : '✅ Normal',
                       color: result.stallWarning ? 'var(--accent-red)' : 'var(--accent-green)',
-                      bg: result.stallWarning ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)' },
+                      bg: result.stallWarning ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)',
+                      tooltip: result.stallWarning ? 'Stall condition: Angle of attack exceeds the stall angle. Lift decreases and drag increases rapidly as airflow separates from the upper surface.' : 'Normal flight condition: airflow is attached to the airfoil surface. Lift and drag behave as expected.' },
                   ].map((item, i) => (
                     <div key={i} className="rounded-lg p-4 text-center relative group" style={{ backgroundColor: item.bg }}>
                       <div className="text-xs mb-1 flex items-center justify-center gap-1" style={{ color: 'var(--text-secondary)' }}>
