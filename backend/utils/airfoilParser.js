@@ -55,28 +55,24 @@ function normalizeCoordinates(coordinates) {
 }
 
 function splitUpperLower(coordinates) {
-  const sorted = [...coordinates].sort((a, b) => a.x - b.x);
-  const teIndex = sorted.reduce((maxIdx, c, i, arr) =>
-    c.x > arr[maxIdx].x ? i : maxIdx, 0);
-
   const upper = [];
   const lower = [];
-  let atLeadingEdge = false;
 
-  for (let i = 0; i <= teIndex; i++) {
-    upper.push(sorted[i]);
+  for (const pt of coordinates) {
+    if (pt.y >= 0) upper.push(pt);
+    else lower.push(pt);
   }
 
-  for (let i = sorted.length - 1; i >= teIndex; i--) {
-    lower.push(sorted[i]);
-  }
+  upper.sort((a, b) => a.x - b.x);
+  lower.sort((a, b) => a.x - b.x);
 
   if (upper.length < 3 || lower.length < 3) {
+    const sorted = [...coordinates].sort((a, b) => a.x - b.x);
     const mid = Math.floor(sorted.length / 2);
-    upper.splice(0, upper.length);
-    lower.splice(0, lower.length);
-    for (let i = 0; i < mid; i++) upper.push(sorted[i]);
-    for (let i = mid; i < sorted.length; i++) lower.push(sorted[i]);
+    return {
+      upper: sorted.slice(0, mid),
+      lower: sorted.slice(mid)
+    };
   }
 
   return { upper, lower };

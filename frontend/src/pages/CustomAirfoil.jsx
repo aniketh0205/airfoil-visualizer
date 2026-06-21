@@ -192,12 +192,12 @@ export default function CustomAirfoil() {
               <h2 className="font-bold mb-3" style={{ color: 'var(--accent-blue)' }}>Geometry Analysis</h2>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {[
-                  { label: 'Max Thickness', value: result.geometry?.maxThickness },
-                  { label: 'Thickness Location', value: `${((result.geometry?.maxThicknessLocation || 0) * 100).toFixed(0)}% chord` },
-                  { label: 'Max Camber', value: result.geometry?.maxCamber },
-                  { label: 'Camber Location', value: `${((result.geometry?.maxCamberLocation || 0) * 100).toFixed(0)}% chord` },
+                  { label: 'Max Thickness', value: result.geometry?.maxThickness != null ? `${(result.geometry.maxThickness * 100).toFixed(1)}%` : '—' },
+                  { label: 'Thickness Location', value: result.geometry?.maxThicknessLocation != null ? `${(result.geometry.maxThicknessLocation * 100).toFixed(0)}% chord` : '—' },
+                  { label: 'Max Camber', value: result.geometry?.maxCamber != null ? `${(result.geometry.maxCamber * 100).toFixed(2)}%` : '—' },
+                  { label: 'Camber Location', value: result.geometry?.maxCamberLocation != null ? `${(result.geometry.maxCamberLocation * 100).toFixed(0)}% chord` : '—' },
                   { label: 'Type Estimate', value: result.geometry?.airfoilTypeEstimate },
-                  { label: 'Stall Estimate', value: `${result.geometry?.stallAngleEstimate}°` },
+                  { label: 'Stall Estimate', value: result.geometry?.stallAngleEstimate != null ? `${result.geometry.stallAngleEstimate}°` : '—' },
                 ].map((item, i) => (
                   <div key={i} className="rounded-lg p-3" style={{ backgroundColor: 'var(--bg-elevated)' }}>
                     <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{item.label}</div>
